@@ -1,0 +1,13 @@
+
+[plantuml,,png]
+----
+@startuml
+left to right direction
+:User:
+rectangle smartfridge {
+ User -- (Inhalt des Kühlschranks abrufen)
+ User -- (Rezept ansehen)
+}
+(Rezept ansehen) -- Rezeptedatenbank
+@enduml
+----
