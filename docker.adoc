@@ -1,0 +1,187 @@
+= Docker & Jenkins
+Thomas W. Stütz <t.stuetz@htl-leonding.ac.at>
+2020-02-20
+:revnumber: {project-version}
+:example-caption!:
+ifndef::imagesdir[:imagesdir: images]
+ifndef::sourcedir[:sourcedir: ../../main/java]
+:icons: font
+
+== Wie funktioniert Docker?
+
+[plantuml,dockerbuild,png]
+----
+@startuml
+file dockerfile [
+
+  Dockerfile
+
+]
+artifact image [
+
+  docker
+  image
+
+]
+artifact container [
+
+  docker
+  container
+
+]
+dockerfile -right-> image : docker build
+image -right-> container : docker run
+@enduml
+----
+
+== Leichtgewichtige Virtualisierung
+
+[plantuml,virt,png]
+----
+@startuml
+
+rectangle fatvirt [
+myApp
+---
+Guest OS
+---
+VirtualBox / vmware ...
+---
+Host OS
+]
+
+rectangle docker [
+myApp
+---
+Libraries
+---
+Docker
+---
+Host OS
+]
+@enduml
+----
+
+== Grundprinzip
+
+* Dockerfile: Kochrezept zum Erstellen des Images
+* Image: Immutable Image
+* Container: Ein gestartetes Image (mutable)
+
+== Ist Docker installiert?
+
+ docker version
+
+== Image alpine ausführen
+
+----
+docker run alpine echo Hello 4bhif!
+----
+
+
+== Image alpine interaktiv
+
+----
+docker run -it alpine /bin/sh
+----
+
+== Ub untu mit einem externen Volume
+----
+docker run -it --name syp_ubuntu -v ${PWD}/my_opt:/opt ubuntu:18.04 /bin/bash
+----
+
+
+=== Docker Whalesay
+
+----
+docker run --rm docker/whalesay cowsay hello 4bhif
+----
+
+=== nginx - Step 1
+
+----
+docker run --rm -p 8081:80 --name nginx nginx
+----
+
+=== nginx - Step 2
+
+.Terminal 1
+----
+docker run --rm -p 8081:80 --name nginx nginx
+----
+
+.Terminal 2
+----
+docker exec -it nginx /bin/sh
+----
+
+=== nginx - Step 3
+
+.Terminal 1
+----
+docker run --rm -v ${PWD}/data:/usr/share/nginx/html -p 8081:80 --name nginx nginx
+----
+
+
+== Unterschied zum Arbeiten ohne Docker
+
+* Ohne Docker werden auf einer Maschine mehrere Softwareprodukte installiert
+* Bei Verwendung von Docker wird für jedes
+Softwareprodukt ein eigener Docker-Container erstellt
+
+
+== Starten einer Jenkins-Instanz in Docker
+
+ docker run -it \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v ./jenkins-data:/var/jenkins_home \
+            -p 8080:8080 \
+            --name local-jenkins \
+            getintodevops/jenkins-withdocker:lts-docker19.03.5
+
+
+////
+== Remove Docker-Volumes
+
+ docker system prune --volumes
+
+source: https://linuxize.com/post/how-to-remove-docker-images-containers-volumes-and-networks/
+////
+
+
+////
+== screen-Terminal
+
+ screen ~/Library/Containers/com.docker.docker/Data/vms/0/tty
+
+Aussteigen mit Ctrl-a Ctrl-d
+
+////
+
+== Dockerfile
+
+----
+FROM jenkins/jenkins:lts
+MAINTAINER miiro@getintodevops.com
+USER root
+
+# Install the latest Docker CE binaries
+RUN apt-get update && \
+    apt-get -y install apt-transport-https \
+      ca-certificates \
+      curl \
+      gnupg2 \
+      software-properties-common && \
+    curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg > /tmp/dkey; apt-key add /tmp/dkey && \
+    add-apt-repository \
+      "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") \
+      $(lsb_release -cs) \
+      stable" && \
+   apt-get update && \
+   apt-get -y install docker-ce
+----
+
+source: https://getintodevops.com/blog/the-simple-way-to-run-docker-in-docker-for-ci[The simple way to run Docker-in-Docker for CI]
+
+
+////
